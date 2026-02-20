@@ -21,7 +21,7 @@ const formatDate = (date) => {
 };
 
 function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState("bookings"); // default ke bookings
+    const [activeTab, setActiveTab] = useState("bookings");
     const [showGuideModal, setShowGuideModal] = useState(false);
 
     const [hotels, setHotels] = useState([]);
@@ -43,8 +43,8 @@ function AdminDashboard() {
     });
 
     useEffect(() => {
-        // Modal muncul SETIAP KALI halaman dibuka (untuk demo)
-        setShowGuideModal(true);
+        // ── Dihapus: setShowGuideModal(true); ──
+        // Modal sekarang hanya muncul saat tombol diklik
 
         fetchHotels();
         fetchRooms();
@@ -156,7 +156,11 @@ function AdminDashboard() {
         }
     };
 
-    // ── TUTUP MODAL ──────────────────────────────────
+    // ── FUNGSI MODAL ─────────────────────────────────
+    const openGuideModal = () => {
+        setShowGuideModal(true);
+    };
+
     const closeGuideModal = () => {
         setShowGuideModal(false);
     };
@@ -164,7 +168,15 @@ function AdminDashboard() {
     return (
         <div style={styles.page}>
             <header style={styles.header}>
-                <h1 style={styles.title}>Admin Dashboard</h1>
+                <div style={styles.headerContent}>
+                    <h1 style={styles.title}>Admin Dashboard</h1>
+                    <button
+                        style={styles.guideButton}
+                        onClick={openGuideModal}
+                    >
+                        Petunjuk Penggunaan
+                    </button>
+                </div>
             </header>
 
             {/* Tab Navigation */}
@@ -214,7 +226,6 @@ function AdminDashboard() {
                                     <div>Kamar</div>
                                     <div>Tamu</div>
                                     <div>Email</div>
-
                                     <div>Check-in</div>
                                     <div>Check-out</div>
                                     <div>Aksi</div>
@@ -233,7 +244,6 @@ function AdminDashboard() {
                                         <div>{b.room_type || "—"}</div>
                                         <div>{b.guest_name}</div>
                                         <div style={styles.emailCell}>{b.email}</div>
-
                                         <div>{formatDate(b.check_in)}</div>
                                         <div>{formatDate(b.check_out)}</div>
                                         <div>
@@ -451,7 +461,6 @@ function AdminDashboard() {
                                     <strong>Catatan Penting untuk Tester / Penilai</strong><br />
                                     • Semua operasi (tambah, hapus) langsung terhubung ke backend/database<br />
                                     • Tidak ada sistem login/autentikasi (untuk menyederhanakan testing)<br />
-
                                     • Data booking akan muncul setelah user melakukan pemesanan dari halaman depan<br />
                                     • Semua field harga & jumlah otomatis divalidasi hanya angka
                                 </li>
@@ -461,7 +470,7 @@ function AdminDashboard() {
                                     • Gunakan tab Booking untuk memantau reservasi terbaru<br />
                                     • Tambah beberapa hotel dulu sebelum menambah kamar<br />
                                     • Gunakan tombol Batal pada booking jika ingin membatalkan reservasi customer<br />
-                                    • Modal ini muncul setiap kali halaman dibuka (mode demo) untuk memudahkan penilaian
+                                    • Klik tombol "Petunjuk Penggunaan" di header jika ingin membaca panduan ini lagi
                                 </li>
                             </ol>
 
@@ -479,7 +488,7 @@ function AdminDashboard() {
 }
 
 // ────────────────────────────────────────────────
-// Styles (termasuk style modal)
+// Styles (ditambah style untuk tombol petunjuk)
 // ────────────────────────────────────────────────
 const styles = {
     page: {
@@ -497,11 +506,29 @@ const styles = {
         zIndex: 10,
         boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
     },
+    headerContent: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "1rem",
+    },
     title: {
         fontSize: "1.8rem",
         fontWeight: 700,
         margin: 0,
         color: "#0f172a",
+    },
+    guideButton: {
+        padding: "0.6rem 1.4rem",
+        background: "#3b82f6",
+        color: "white",
+        border: "none",
+        borderRadius: "8px",
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        cursor: "pointer",
+        transition: "background 0.2s, transform 0.1s",
     },
     tabContainer: {
         display: "flex",
@@ -669,7 +696,7 @@ const styles = {
         padding: "2.5rem 1rem",
     },
 
-    // ── MODAL STYLES ──
+    // ── MODAL STYLES ── (tetap sama)
     modalOverlay: {
         position: "fixed",
         inset: 0,

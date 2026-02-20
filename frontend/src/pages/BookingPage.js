@@ -10,7 +10,7 @@ function BookingPage() {
     const [bookingRef, setBookingRef] = useState("");
     const [loadingHotels, setLoadingHotels] = useState(false);
     const [loadingRooms, setLoadingRooms] = useState(false);
-    const [showGuideModal, setShowGuideModal] = useState(false); // ← untuk modal guide
+    const [showGuideModal, setShowGuideModal] = useState(false);
 
     const [checkInOutSelected, setCheckInOutSelected] = useState(false);
 
@@ -23,11 +23,17 @@ function BookingPage() {
         check_out: "",
     });
 
-    // Modal muncul SETIAP KALI halaman dibuka (untuk demo)
     useEffect(() => {
-        setShowGuideModal(true);
-
-        if (!form.hotel_id || !form.check_in || !form.check_out) return;
+        // Hanya proses validasi & load kamar jika KETIGA field ini sudah terisi
+        if (!form.hotel_id || !form.check_in || !form.check_out) {
+            if (form.hotel_id) {
+                setMessage("Silakan pilih tanggal check-in dan check-out untuk melihat kamar yang tersedia");
+                setMessageType("info");
+            }
+            setCheckInOutSelected(false);
+            setRooms([]); // pastikan daftar kamar kosong jika tanggal belum lengkap
+            return;
+        }
 
         const cin = new Date(form.check_in);
         const cout = new Date(form.check_out);
@@ -48,14 +54,11 @@ function BookingPage() {
             return;
         }
 
+        // Jika sampai sini → tanggal valid → load kamar
         setMessage("");
         getHotelRooms(form.hotel_id, form.check_in, form.check_out);
         setCheckInOutSelected(true);
     }, [form.hotel_id, form.check_in, form.check_out]);
-
-    // ────────────────────────────────────────────────
-    // Fungsi-fungsi utama
-    // ────────────────────────────────────────────────
 
     const searchHotel = async () => {
         if (!city.trim()) return;
@@ -65,7 +68,9 @@ function BookingPage() {
                 `http://localhost:5000/api/hotels/search?city=${encodeURIComponent(city)}`
             );
             setHotels(res.data || []);
+            setMessage("");
         } catch (err) {
+            console.error("Error search hotel:", err);
             setMessage("Gagal mencari hotel. Silakan coba lagi.");
             setMessageType("error");
         } finally {
@@ -75,16 +80,26 @@ function BookingPage() {
 
     const getHotelRooms = async (hotelId, checkIn = null, checkOut = null) => {
         if (!hotelId) return;
+
         setLoadingRooms(true);
+        setMessage(""); // bersihkan pesan sebelumnya
+
         try {
             let url = `http://localhost:5000/api/hotels/${hotelId}`;
             if (checkIn && checkOut) {
                 url += `?check_in=${checkIn}&check_out=${checkOut}`;
             }
+
             const res = await axios.get(url);
             setRooms(res.data || []);
+
+            if (res.data.length === 0) {
+                setMessage("Tidak ada tipe kamar yang tersedia untuk hotel ini pada tanggal tersebut");
+                setMessageType("info");
+            }
         } catch (err) {
-            setMessage("Gagal memuat daftar kamar. Silakan coba lagi.");
+            console.error("Error get hotel rooms:", err.response?.data || err.message);
+            setMessage("Gagal memuat daftar kamar. Pastikan tanggal valid dan server berjalan.");
             setMessageType("error");
             setRooms([]);
         } finally {
@@ -97,9 +112,18 @@ function BookingPage() {
         setForm((prev) => ({ ...prev, [name]: value }));
 
         if (name === "hotel_id") {
+            // Reset kamar & status
             setForm((prev) => ({ ...prev, room_id: "" }));
-            getHotelRooms(value);
+            setRooms([]);
             setCheckInOutSelected(false);
+
+            // Hanya load kamar jika tanggal SUDAH diisi
+            if (form.check_in && form.check_out) {
+                getHotelRooms(value, form.check_in, form.check_out);
+            } else {
+                setMessage("Pilih tanggal check-in dan check-out terlebih dahulu untuk melihat ketersediaan kamar");
+                setMessageType("info");
+            }
         }
     };
 
@@ -144,19 +168,20 @@ function BookingPage() {
             setRooms([]);
             setCheckInOutSelected(false);
         } catch (err) {
+            console.error("Error booking:", err.response?.data || err.message);
             setMessage(err.response?.data?.message || "Gagal melakukan booking. Silakan coba lagi.");
             setMessageType("error");
         }
     };
 
-    // ── TUTUP MODAL ──
+    const openGuideModal = () => {
+        setShowGuideModal(true);
+    };
+
     const closeGuideModal = () => {
         setShowGuideModal(false);
     };
 
-    // ────────────────────────────────────────────────
-    // Styles (ditambah style modal)
-    // ────────────────────────────────────────────────
     const styles = {
         page: {
             background: "linear-gradient(to bottom, #f8fafc, #e2e8f0)",
@@ -171,14 +196,26 @@ function BookingPage() {
         },
         header: {
             textAlign: "center",
-            marginBottom: "2.5rem",
+            marginBottom: "1.5rem",
         },
         title: {
             fontSize: "2.5rem",
             fontWeight: 700,
             color: "#0f172a",
-            marginBottom: "0.75rem",
+            marginBottom: "0.5rem",
             letterSpacing: "-0.025em",
+        },
+        guideLink: {
+            color: "#3b82f6",
+            fontWeight: 600,
+            cursor: "pointer",
+            textDecoration: "underline",
+            fontSize: "1.1rem",
+            marginLeft: "1rem",
+            transition: "color 0.2s",
+        },
+        guideLinkHover: {
+            color: "#2563eb",
         },
         adminButtonContainer: {
             textAlign: "center",
@@ -197,11 +234,6 @@ function BookingPage() {
             transition: "all 0.2s ease",
             border: "none",
             cursor: "pointer",
-        },
-        adminButtonHover: {
-            background: "#991b1b",
-            transform: "translateY(-2px)",
-            boxShadow: "0 10px 15px -3px rgba(185,28,28,0.3)",
         },
         alert: {
             padding: "1.25rem",
@@ -309,8 +341,6 @@ function BookingPage() {
             transition: "all 0.2s ease",
             boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
         },
-
-        // ── MODAL STYLES ──
         modalOverlay: {
             position: "fixed",
             inset: 0,
@@ -368,9 +398,41 @@ function BookingPage() {
             <div style={styles.container}>
                 <div style={styles.header}>
                     <h1 style={styles.title}>Cari & Pesan Hotel</h1>
+                    <button
+                        type="button"
+                        onClick={openGuideModal}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 20px',
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+                            transition: 'all 0.3s ease',
+                            marginTop: '12px',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.35)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.25)';
+                        }}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Petunjuk Cara Booking
+                    </button>
                 </div>
 
-                {/* Tombol Admin Dashboard */}
                 <div style={styles.adminButtonContainer}>
                     <a
                         href="http://localhost:3000/admin"
@@ -378,14 +440,14 @@ function BookingPage() {
                         rel="noopener noreferrer"
                         style={styles.adminButton}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = styles.adminButtonHover.background;
+                            e.currentTarget.style.background = "#991b1b";
                             e.currentTarget.style.transform = "translateY(-2px)";
-                            e.currentTarget.style.boxShadow = styles.adminButtonHover.boxShadow;
+                            e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(185,28,28,0.3)";
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "#55b91c";
+                            e.currentTarget.style.background = "#b91c1c";
                             e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(99, 185, 28, 0.2)";
+                            e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(185,28,28,0.2)";
                         }}
                     >
                         Dashboard Admin
@@ -396,7 +458,9 @@ function BookingPage() {
                     <div
                         style={{
                             ...styles.alert,
-                            ...(messageType === "success" ? styles.alertSuccess : styles.alertError),
+                            ...(messageType === "success" ? styles.alertSuccess :
+                                messageType === "error" ? styles.alertError :
+                                    { background: "#e0f2fe", color: "#1e40af", border: "1px solid #93c5fd" }),
                         }}
                     >
                         <strong>{message}</strong>
@@ -408,9 +472,7 @@ function BookingPage() {
                     </div>
                 )}
 
-                {/* SEARCH + HOTEL LIST – Side by Side */}
                 <div style={styles.topSection}>
-                    {/* Search Card */}
                     <div style={styles.searchCard}>
                         <h2 style={styles.sectionTitle}>Lokasi Tujuan</h2>
                         <div style={styles.searchBox}>
@@ -432,7 +494,6 @@ function BookingPage() {
                         </div>
                     </div>
 
-                    {/* Hotel Results Card */}
                     <div style={styles.resultsCard}>
                         {hotels.length > 0 ? (
                             <>
@@ -481,7 +542,6 @@ function BookingPage() {
                     </div>
                 </div>
 
-                {/* Form Pemesanan */}
                 <div style={styles.formCard}>
                     <h2 style={styles.sectionTitle}>Detail Pemesanan</h2>
 
@@ -573,7 +633,7 @@ function BookingPage() {
                                     >
                                         {room.room_type} • Rp {Number(room.price).toLocaleString("id-ID")}
                                         {room.is_available
-                                            ? `  (${room.available_rooms} tersisa)`
+                                            ? `  (${room.available_rooms || 0} tersisa)`
                                             : "  • Penuh"}
                                     </option>
                                 ))}
@@ -593,7 +653,6 @@ function BookingPage() {
                 </div>
             </div>
 
-            {/* ── MODAL PETUNJUK CARA BOOKING ── */}
             {showGuideModal && (
                 <div style={styles.modalOverlay}>
                     <div style={styles.modalContent}>
