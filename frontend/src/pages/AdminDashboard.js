@@ -225,7 +225,7 @@ function AdminDashboard() {
                                     <div>Hotel</div>
                                     <div>Kamar</div>
                                     <div>Tamu</div>
-                                    <div>Email</div>
+
                                     <div>Check-in</div>
                                     <div>Check-out</div>
 
@@ -259,8 +259,8 @@ function AdminDashboard() {
                                             <div style={styles.refCell}>{b.booking_reference}</div>
                                             <div>{b.hotel_name || "—"}</div>
                                             <div>{b.room_type || "—"}</div>
-                                            <div>{b.guest_name}</div>
-                                            <div style={styles.emailCell}>{b.email}</div>
+                                            <div>{b.guest_name} - {b.email}</div>
+
                                             <div>{formatDate(b.check_in)}</div>
                                             <div>{formatDate(b.check_out)}</div>
 
