@@ -827,27 +827,27 @@ function BookingPage() {
 
                             <ol style={{ paddingLeft: "2rem", margin: "2rem 0" }}>
                                 <li style={{ marginBottom: "1.4rem" }}>
-                                    <strong>1. Cari hotel</strong><br />
+                                    <strong>Cari hotel</strong><br />
                                     Ketik nama kota tujuan → klik "Cari Hotel" atau tekan Enter.
                                 </li>
                                 <li style={{ marginBottom: "1.4rem" }}>
-                                    <strong>2. Pilih hotel</strong><br />
+                                    <strong>Pilih hotel</strong><br />
                                     Klik tombol "Pilih Hotel" pada hotel yang Anda inginkan.
                                 </li>
                                 <li style={{ marginBottom: "1.4rem" }}>
-                                    <strong>3. Tentukan tanggal</strong><br />
+                                    <strong>Tentukan tanggal</strong><br />
                                     Isi tanggal Check-in dan Check-out (pastikan valid).
                                 </li>
                                 <li style={{ marginBottom: "1.4rem" }}>
-                                    <strong>4. Pilih tipe kamar</strong><br />
+                                    <strong>Pilih tipe kamar</strong><br />
                                     Pilih kamar yang masih tersedia (lihat jumlah "tersisa").
                                 </li>
                                 <li style={{ marginBottom: "1.4rem" }}>
-                                    <strong>5. Isi data diri</strong><br />
+                                    <strong>Isi data diri</strong><br />
                                     Masukkan nama lengkap dan email dengan benar.
                                 </li>
                                 <li style={{ marginBottom: "1.4rem" }}>
-                                    <strong>6. Konfirmasi booking</strong><br />
+                                    <strong>Konfirmasi booking</strong><br />
                                     Periksa semua data → klik "Konfirmasi & Pesan Sekarang".
                                 </li>
                             </ol>
