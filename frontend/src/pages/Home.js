@@ -35,7 +35,7 @@ function Home() {
                 <section style={styles.hero}>
                     <h1 style={styles.heroTitle}>Temukan Hotel Impianmu</h1>
                     <p style={styles.heroSubtitle}>
-                        Pesan hotel terbaik dengan harga spesial di seluruh Indonesia
+                        Pesan hotel terbaik dengan harga spesial di Bali
                     </p>
 
                     {/* Tombol utama ke halaman booking */}
