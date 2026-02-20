@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 function BookingPage() {
@@ -23,15 +23,17 @@ function BookingPage() {
         check_out: "",
     });
 
+    // Ref untuk auto-scroll ke alert setelah booking berhasil
+    const alertRef = useRef(null);
+
     useEffect(() => {
-        // Hanya proses validasi & load kamar jika KETIGA field ini sudah terisi
         if (!form.hotel_id || !form.check_in || !form.check_out) {
             if (form.hotel_id) {
                 setMessage("Silakan pilih tanggal check-in dan check-out untuk melihat kamar yang tersedia");
                 setMessageType("info");
             }
             setCheckInOutSelected(false);
-            setRooms([]); // pastikan daftar kamar kosong jika tanggal belum lengkap
+            setRooms([]);
             return;
         }
 
@@ -54,7 +56,6 @@ function BookingPage() {
             return;
         }
 
-        // Jika sampai sini → tanggal valid → load kamar
         setMessage("");
         getHotelRooms(form.hotel_id, form.check_in, form.check_out);
         setCheckInOutSelected(true);
@@ -82,7 +83,7 @@ function BookingPage() {
         if (!hotelId) return;
 
         setLoadingRooms(true);
-        setMessage(""); // bersihkan pesan sebelumnya
+        setMessage("");
 
         try {
             let url = `http://localhost:5000/api/hotels/${hotelId}`;
@@ -112,12 +113,10 @@ function BookingPage() {
         setForm((prev) => ({ ...prev, [name]: value }));
 
         if (name === "hotel_id") {
-            // Reset kamar & status
             setForm((prev) => ({ ...prev, room_id: "" }));
             setRooms([]);
             setCheckInOutSelected(false);
 
-            // Hanya load kamar jika tanggal SUDAH diisi
             if (form.check_in && form.check_out) {
                 getHotelRooms(value, form.check_in, form.check_out);
             } else {
@@ -156,7 +155,7 @@ function BookingPage() {
             setMessageType("success");
             setBookingRef(res.data.booking_reference);
 
-            // Reset form
+            // Reset form setelah berhasil
             setForm({
                 hotel_id: "",
                 room_id: "",
@@ -167,6 +166,17 @@ function BookingPage() {
             });
             setRooms([]);
             setCheckInOutSelected(false);
+
+            // Auto scroll ke alert success dengan sedikit delay agar render selesai
+            setTimeout(() => {
+                if (alertRef.current) {
+                    alertRef.current.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
+                }
+            }, 150);
+
         } catch (err) {
             console.error("Error booking:", err.response?.data || err.message);
             setMessage(err.response?.data?.message || "Gagal melakukan booking. Silakan coba lagi.");
@@ -174,172 +184,220 @@ function BookingPage() {
         }
     };
 
-    const openGuideModal = () => {
-        setShowGuideModal(true);
-    };
+    const openGuideModal = () => setShowGuideModal(true);
+    const closeGuideModal = () => setShowGuideModal(false);
 
-    const closeGuideModal = () => {
-        setShowGuideModal(false);
-    };
-
+    // Styles (modern, responsive, dengan hover effects)
     const styles = {
         page: {
-            background: "linear-gradient(to bottom, #f8fafc, #e2e8f0)",
+            background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
             minHeight: "100vh",
-            padding: "2rem 1rem",
+            padding: "2.5rem 1rem 5rem",
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-            color: "#1e293b",
+            color: "#0f172a",
         },
         container: {
-            maxWidth: "1200px",
+            maxWidth: "1280px",
             margin: "0 auto",
+            width: "100%",
         },
         header: {
             textAlign: "center",
-            marginBottom: "1.5rem",
+            marginBottom: "3.5rem",
         },
         title: {
-            fontSize: "2.5rem",
-            fontWeight: 700,
-            color: "#0f172a",
-            marginBottom: "0.5rem",
-            letterSpacing: "-0.025em",
+            fontSize: "clamp(2.5rem, 6vw, 4rem)",
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
+            marginBottom: "1rem",
+            background: "linear-gradient(to right, #1e40af, #3b82f6)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
         },
-        guideLink: {
-            color: "#3b82f6",
+        subtitle: {
+            fontSize: "1.25rem",
+            color: "#475569",
+            maxWidth: "640px",
+            margin: "0 auto 1.5rem",
+        },
+        guideButton: {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "1rem 2rem",
+            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+            color: "white",
+            border: "none",
+            borderRadius: "9999px",
+            fontSize: "1.1rem",
             fontWeight: 600,
             cursor: "pointer",
-            textDecoration: "underline",
-            fontSize: "1.1rem",
-            marginLeft: "1rem",
-            transition: "color 0.2s",
-        },
-        guideLinkHover: {
-            color: "#2563eb",
+            boxShadow: "0 10px 25px -5px rgba(59,130,246,0.4)",
+            transition: "all 0.3s ease",
         },
         adminButtonContainer: {
             textAlign: "center",
-            marginBottom: "2.5rem",
+            marginBottom: "3.5rem",
         },
         adminButton: {
-            display: "inline-block",
-            padding: "0.9rem 2.2rem",
-            background: "#b91c1c",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "1rem 2.2rem",
+            background: "#dc2626",
             color: "white",
             fontSize: "1.1rem",
             fontWeight: 600,
-            borderRadius: "0.75rem",
+            borderRadius: "9999px",
             textDecoration: "none",
-            boxShadow: "0 4px 6px -1px rgba(185,28,28,0.2)",
-            transition: "all 0.2s ease",
+            boxShadow: "0 10px 25px -5px rgba(220,38,38,0.35)",
+            transition: "all 0.3s ease",
             border: "none",
             cursor: "pointer",
         },
         alert: {
-            padding: "1.25rem",
-            borderRadius: "0.75rem",
-            marginBottom: "1.75rem",
+            ref: alertRef,
+            padding: "1.5rem 2rem",
+            borderRadius: "1rem",
+            margin: "0 auto 3rem",
+            maxWidth: "900px",
             textAlign: "center",
             fontWeight: 500,
+            fontSize: "1.15rem",
+            boxShadow: "0 8px 16px -4px rgba(0,0,0,0.12)",
+            transition: "all 0.4s ease",
         },
-        alertSuccess: { background: "#ecfdf5", color: "#065f46", border: "1px solid #6ee7b7" },
-        alertError: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fca5a5" },
+        alertSuccess: {
+            background: "#ecfdf5",
+            color: "#065f46",
+            border: "2px solid #6ee7b7",
+        },
+        alertError: {
+            background: "#fef2f2",
+            color: "#991b1b",
+            border: "2px solid #fca5a5",
+        },
+        alertInfo: {
+            background: "#e0f2fe",
+            color: "#1e40af",
+            border: "2px solid #93c5fd",
+        },
         topSection: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2rem",
-            marginBottom: "2.5rem",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "minmax(360px, 1fr) minmax(480px, 2fr)",
+            gap: "2.5rem",
+            marginBottom: "4rem",
+            "@media (max-width: 1024px)": {
+                gridTemplateColumns: "1fr",
+            },
         },
-        searchCard: {
-            flex: "1",
-            minWidth: "320px",
+        card: {
             background: "white",
-            borderRadius: "1rem",
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
-            padding: "1.75rem",
+            borderRadius: "1.5rem",
+            boxShadow: "0 15px 40px -10px rgba(0,0,0,0.1)",
+            overflow: "hidden",
+            transition: "transform 0.3s ease, box-shadow 0.3s ease",
         },
-        resultsCard: {
-            flex: "2",
-            minWidth: "400px",
-            background: "white",
-            borderRadius: "1rem",
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
-            padding: "1.75rem",
+        cardHover: {
+            transform: "translateY(-8px)",
+            boxShadow: "0 30px 60px -15px rgba(0,0,0,0.15)",
         },
-        sectionTitle: {
+        cardHeader: {
+            padding: "1.75rem 2rem",
+            background: "linear-gradient(to right, #f8fafc, #f1f5f9)",
+            borderBottom: "1px solid #e2e8f0",
+        },
+        cardTitle: {
+            margin: 0,
             fontSize: "1.5rem",
-            fontWeight: 600,
+            fontWeight: 700,
             color: "#1e293b",
-            marginBottom: "1.25rem",
         },
-        searchBox: {
+        cardBody: {
+            padding: "2rem",
+        },
+        inputGroup: {
             display: "flex",
-            gap: "0.75rem",
+            gap: "1rem",
             flexWrap: "wrap",
         },
         input: {
-            flex: "1",
-            minWidth: "220px",
-            padding: "0.75rem 1rem",
-            borderRadius: "0.75rem",
+            flex: 1,
+            padding: "1rem 1.5rem",
+            borderRadius: "1rem",
             border: "1px solid #cbd5e1",
-            fontSize: "1rem",
-            background: "#f8fafc",
+            fontSize: "1.05rem",
+            background: "#ffffff",
+            transition: "all 0.2s ease",
+            outline: "none",
         },
-        searchBtn: {
-            padding: "0.75rem 1.75rem",
-            background: "#6366f1",
+        inputFocus: {
+            borderColor: "#3b82f6",
+            boxShadow: "0 0 0 4px rgba(59,130,246,0.15)",
+        },
+        btnPrimary: {
+            padding: "1rem 2rem",
+            background: "linear-gradient(to right, #6366f1, #4f46e5)",
             color: "white",
             border: "none",
-            borderRadius: "0.75rem",
+            borderRadius: "1rem",
+            fontSize: "1.1rem",
             fontWeight: 600,
             cursor: "pointer",
-            transition: "all 0.2s ease",
+            transition: "all 0.3s ease",
+            boxShadow: "0 6px 12px -2px rgba(99,102,241,0.25)",
         },
-        hotelList: {
-            display: "grid",
-            gap: "1rem",
+        btnPrimaryHover: {
+            transform: "translateY(-3px)",
+            boxShadow: "0 12px 24px -6px rgba(99,102,241,0.4)",
+            background: "linear-gradient(to right, #4f46e5, #4338ca)",
         },
         hotelCard: {
+            padding: "1.5rem 1.75rem",
             border: "1px solid #e2e8f0",
-            borderRadius: "0.875rem",
-            padding: "1.25rem",
+            borderRadius: "1.25rem",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            transition: "all 0.2s ease",
+            gap: "1.5rem",
+            transition: "all 0.3s ease",
+            background: "#ffffff",
         },
-        formCard: {
-            background: "white",
-            borderRadius: "1rem",
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
-            padding: "2rem",
+        hotelCardHover: {
+            borderColor: "#cbd5e1",
+            boxShadow: "0 12px 30px -8px rgba(0,0,0,0.1)",
+            transform: "translateY(-6px)",
         },
         formGrid: {
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "1.5rem",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: "2rem",
         },
         label: {
             display: "block",
-            fontSize: "0.95rem",
-            fontWeight: 500,
-            color: "#475569",
-            marginBottom: "0.5rem",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: "#334155",
+            marginBottom: "0.75rem",
         },
         bookBtn: {
-            width: "100%",
-            padding: "1.125rem",
+            gridColumn: "1 / -1",
+            padding: "1.4rem",
             background: "linear-gradient(to right, #10b981, #059669)",
             color: "white",
             border: "none",
-            borderRadius: "0.75rem",
-            fontSize: "1.125rem",
-            fontWeight: 600,
+            borderRadius: "1.25rem",
+            fontSize: "1.25rem",
+            fontWeight: 700,
             cursor: "pointer",
-            transition: "all 0.2s ease",
-            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+            transition: "all 0.35s ease",
+            boxShadow: "0 12px 30px -6px rgba(16,185,129,0.4)",
+            marginTop: "1.5rem",
+        },
+        bookBtnHover: {
+            transform: "translateY(-4px)",
+            boxShadow: "0 20px 40px -10px rgba(16,185,129,0.5)",
+            background: "linear-gradient(to right, #059669, #047857)",
         },
         modalOverlay: {
             position: "fixed",
@@ -349,47 +407,29 @@ function BookingPage() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1000,
-            padding: "1rem",
+            padding: "1.5rem",
         },
         modalContent: {
             background: "white",
-            borderRadius: "16px",
-            maxWidth: "620px",
+            borderRadius: "1.75rem",
+            maxWidth: "720px",
             width: "100%",
             maxHeight: "90vh",
             overflowY: "auto",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
-            padding: "2.2rem",
+            boxShadow: "0 30px 70px rgba(0,0,0,0.35)",
+            padding: "2.8rem",
+            position: "relative",
         },
-        modalTitle: {
-            fontSize: "1.8rem",
-            fontWeight: 700,
-            margin: "0 0 1.5rem 0",
-            color: "#111827",
-            textAlign: "center",
-        },
-        modalBody: {
-            fontSize: "1rem",
-            lineHeight: 1.65,
-            color: "#374151",
-        },
-        modalList: {
-            paddingLeft: "1.6rem",
-            margin: "1.2rem 0",
-        },
-        modalStep: {
-            marginBottom: "1rem",
-            fontWeight: 500,
-        },
-        btnPrimary: {
-            padding: "0.8rem 1.6rem",
-            background: "#3b82f6",
-            color: "white",
+        modalClose: {
+            position: "absolute",
+            top: "1.5rem",
+            right: "1.8rem",
+            background: "none",
             border: "none",
-            borderRadius: "8px",
-            fontWeight: 600,
+            fontSize: "2.2rem",
+            color: "#9ca3af",
             cursor: "pointer",
-            transition: "background 0.2s",
+            transition: "color 0.2s",
         },
     };
 
@@ -397,37 +437,27 @@ function BookingPage() {
         <div style={styles.page}>
             <div style={styles.container}>
                 <div style={styles.header}>
-                    <h1 style={styles.title}>Cari & Pesan Hotel</h1>
+                    <h1 style={styles.title}>Pesan Hotel Impianmu</h1>
+                    <p style={styles.subtitle}>
+                        Temukan penginapan terbaik di berbagai kota dengan harga transparan dan proses cepat
+                    </p>
+
                     <button
                         type="button"
                         onClick={openGuideModal}
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '10px 20px',
-                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
-                            transition: 'all 0.3s ease',
-                            marginTop: '12px',
-                        }}
+                        style={styles.guideButton}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                            e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.35)';
+                            e.currentTarget.style.transform = "translateY(-4px)";
+                            e.currentTarget.style.boxShadow = "0 15px 35px -8px rgba(59,130,246,0.5)";
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.25)';
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 10px 25px -5px rgba(59,130,246,0.4)";
                         }}
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 16h.01M12 12h.01M12 8h.01" />
                         </svg>
                         Petunjuk Cara Booking
                     </button>
@@ -440,285 +470,402 @@ function BookingPage() {
                         rel="noopener noreferrer"
                         style={styles.adminButton}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#991b1b";
-                            e.currentTarget.style.transform = "translateY(-2px)";
-                            e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(185,28,28,0.3)";
+                            e.currentTarget.style.transform = "translateY(-4px)";
+                            e.currentTarget.style.boxShadow = "0 15px 35px -8px rgba(220,38,38,0.5)";
+                            e.currentTarget.style.background = "#ef4444";
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "#b91c1c";
                             e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(185,28,28,0.2)";
+                            e.currentTarget.style.boxShadow = "0 10px 25px -5px rgba(220,38,38,0.35)";
+                            e.currentTarget.style.background = "#dc2626";
                         }}
                     >
-                        Dashboard Admin
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 4v16m8-8H4" />
+                        </svg>
+                        Masuk ke Dashboard Admin
                     </a>
                 </div>
 
                 {message && (
                     <div
+                        ref={alertRef}
                         style={{
                             ...styles.alert,
-                            ...(messageType === "success" ? styles.alertSuccess :
-                                messageType === "error" ? styles.alertError :
-                                    { background: "#e0f2fe", color: "#1e40af", border: "1px solid #93c5fd" }),
+                            ...(messageType === "success"
+                                ? styles.alertSuccess
+                                : messageType === "error"
+                                    ? styles.alertError
+                                    : styles.alertInfo),
                         }}
                     >
                         <strong>{message}</strong>
                         {bookingRef && (
-                            <p style={{ marginTop: "0.5rem", fontWeight: 600 }}>
-                                No. Referensi: <span style={{ color: "#065f46" }}>{bookingRef}</span>
+                            <p
+                                style={{
+                                    marginTop: "1rem",
+                                    fontSize: "1.25rem",
+                                    fontWeight: 700,
+                                }}
+                            >
+                                No. Referensi Booking:{" "}
+                                <span
+                                    style={{
+                                        background: "rgba(255,255,255,0.7)",
+                                        padding: "4px 12px",
+                                        borderRadius: "8px",
+                                        color: messageType === "success" ? "#065f46" : "#1e40af",
+                                    }}
+                                >
+                                    {bookingRef}
+                                </span>
                             </p>
                         )}
                     </div>
                 )}
 
                 <div style={styles.topSection}>
-                    <div style={styles.searchCard}>
-                        <h2 style={styles.sectionTitle}>Lokasi Tujuan</h2>
-                        <div style={styles.searchBox}>
-                            <input
-                                style={styles.input}
-                                type="text"
-                                placeholder="Kota atau daerah (contoh: Badung, Denpasar, Gianyar)"
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && searchHotel()}
-                            />
-                            <button
-                                style={styles.searchBtn}
-                                onClick={searchHotel}
-                                disabled={loadingHotels}
-                            >
-                                {loadingHotels ? "Mencari..." : "Cari Hotel"}
-                            </button>
+                    {/* Kolom kiri - Pencarian */}
+                    <div
+                        style={{
+                            ...styles.card,
+                            ...(loadingHotels ? {} : { ":hover": styles.cardHover }),
+                        }}
+                    >
+                        <div style={styles.cardHeader}>
+                            <h2 style={styles.cardTitle}>Cari Hotel di Kota Tujuan</h2>
+                        </div>
+                        <div style={styles.cardBody}>
+                            <div style={styles.inputGroup}>
+                                <input
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                    type="text"
+                                    placeholder="Contoh: Denpasar, Jakarta, Bandung, Yogyakarta..."
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && searchHotel()}
+                                />
+                                <button
+                                    style={{
+                                        ...styles.btnPrimary,
+                                        minWidth: "160px",
+                                        ...(loadingHotels ? { opacity: 0.7, cursor: "not-allowed" } : {}),
+                                    }}
+                                    onClick={searchHotel}
+                                    disabled={loadingHotels}
+                                    onMouseEnter={(e) =>
+                                        !loadingHotels && Object.assign(e.currentTarget.style, styles.btnPrimaryHover)
+                                    }
+                                    onMouseLeave={(e) =>
+                                        !loadingHotels &&
+                                        Object.assign(e.currentTarget.style, {
+                                            transform: "translateY(0)",
+                                            boxShadow: "0 6px 12px -2px rgba(99,102,241,0.25)",
+                                        })
+                                    }
+                                >
+                                    {loadingHotels ? "Mencari..." : "Cari Hotel"}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div style={styles.resultsCard}>
-                        {hotels.length > 0 ? (
-                            <>
-                                <h2 style={styles.sectionTitle}>
-                                    Hotel Tersedia {city ? `di ${city}` : ""}
-                                </h2>
-                                <div style={styles.hotelList}>
+                    {/* Kolom kanan - Daftar Hotel */}
+                    <div style={styles.card}>
+                        <div style={styles.cardHeader}>
+                            <h2 style={styles.cardTitle}>
+                                {hotels.length > 0
+                                    ? `Hotel Tersedia ${city ? `di ${city}` : ""}`
+                                    : "Hasil Pencarian Hotel"}
+                            </h2>
+                        </div>
+                        <div style={styles.cardBody}>
+                            {hotels.length > 0 ? (
+                                <div style={{ display: "grid", gap: "1.5rem" }}>
                                     {hotels.map((hotel) => (
-                                        <div key={hotel.id} style={styles.hotelCard}>
+                                        <div
+                                            key={hotel.id}
+                                            style={{
+                                                ...styles.hotelCard,
+                                                ":hover": styles.hotelCardHover,
+                                            }}
+                                        >
                                             <div>
-                                                <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600 }}>
+                                                <h3
+                                                    style={{
+                                                        margin: 0,
+                                                        fontSize: "1.35rem",
+                                                        fontWeight: 700,
+                                                        color: "#1e293b",
+                                                    }}
+                                                >
                                                     {hotel.name}
                                                 </h3>
-                                                <p style={{ color: "#64748b", marginTop: "0.25rem" }}>
+                                                <p
+                                                    style={{
+                                                        margin: "0.5rem 0 0",
+                                                        color: "#64748b",
+                                                        fontSize: "1rem",
+                                                    }}
+                                                >
                                                     📍 {hotel.city}
                                                 </p>
                                             </div>
                                             <button
                                                 style={{
-                                                    background: "#6366f1",
-                                                    color: "white",
-                                                    border: "none",
-                                                    padding: "0.625rem 1.25rem",
-                                                    borderRadius: "0.625rem",
-                                                    cursor: "pointer",
-                                                    fontWeight: 500,
-                                                    transition: "all 0.2s ease",
+                                                    ...styles.btnPrimary,
+                                                    padding: "0.85rem 1.6rem",
+                                                    fontSize: "1.05rem",
                                                 }}
                                                 onClick={() =>
                                                     handleChange({ target: { name: "hotel_id", value: hotel.id } })
                                                 }
                                             >
-                                                Pilih
+                                                Pilih Hotel
                                             </button>
                                         </div>
                                     ))}
                                 </div>
-                            </>
-                        ) : (
-                            <div style={{ color: "#64748b", textAlign: "center", padding: "3rem 1rem" }}>
-                                {loadingHotels
-                                    ? "Sedang mencari hotel..."
-                                    : "Belum ada hasil. Masukkan kota tujuan Anda di sebelah kiri."}
-                            </div>
-                        )}
+                            ) : (
+                                <div
+                                    style={{
+                                        textAlign: "center",
+                                        padding: "5rem 1.5rem",
+                                        color: "#64748b",
+                                        fontSize: "1.15rem",
+                                        lineHeight: 1.7,
+                                    }}
+                                >
+                                    {loadingHotels
+                                        ? "Sedang mencari hotel terbaik untuk Anda..."
+                                        : "Masukkan nama kota di kolom sebelah kiri untuk melihat daftar hotel yang tersedia"}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div style={styles.formCard}>
-                    <h2 style={styles.sectionTitle}>Detail Pemesanan</h2>
+                {/* Form Pemesanan */}
+                <div style={styles.card}>
+                    <div style={styles.cardHeader}>
+                        <h2 style={styles.cardTitle}>Detail Pemesanan</h2>
+                    </div>
+                    <div style={{ ...styles.cardBody, paddingBottom: "3rem" }}>
+                        <form onSubmit={handleSubmit} style={styles.formGrid}>
+                            <div>
+                                <label style={styles.label}>Hotel yang Dipilih</label>
+                                <select
+                                    name="hotel_id"
+                                    value={form.hotel_id}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                >
+                                    <option value="">Pilih hotel terlebih dahulu</option>
+                                    {hotels.map((h) => (
+                                        <option key={h.id} value={h.id}>
+                                            {h.name} — {h.city}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                    <form onSubmit={handleSubmit} style={styles.formGrid}>
-                        <div>
-                            <label style={styles.label}>Hotel yang Dipilih</label>
-                            <select
-                                name="hotel_id"
-                                value={form.hotel_id}
-                                onChange={handleChange}
-                                required
-                                style={styles.input}
-                            >
-                                <option value="">Pilih hotel terlebih dahulu</option>
-                                {hotels.map((h) => (
-                                    <option key={h.id} value={h.id}>
-                                        {h.name} — {h.city}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                            <div>
+                                <label style={styles.label}>Tanggal Check-in</label>
+                                <input
+                                    type="date"
+                                    name="check_in"
+                                    value={form.check_in}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                />
+                            </div>
 
-                        <div>
-                            <label style={styles.label}>Tanggal Check-in</label>
-                            <input
-                                type="date"
-                                name="check_in"
-                                value={form.check_in}
-                                onChange={handleChange}
-                                required
-                                style={styles.input}
-                            />
-                        </div>
+                            <div>
+                                <label style={styles.label}>Tanggal Check-out</label>
+                                <input
+                                    type="date"
+                                    name="check_out"
+                                    value={form.check_out}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                />
+                            </div>
 
-                        <div>
-                            <label style={styles.label}>Tanggal Check-out</label>
-                            <input
-                                type="date"
-                                name="check_out"
-                                value={form.check_out}
-                                onChange={handleChange}
-                                required
-                                style={styles.input}
-                            />
-                        </div>
+                            <div>
+                                <label style={styles.label}>Nama Lengkap</label>
+                                <input
+                                    type="text"
+                                    name="guest_name"
+                                    value={form.guest_name}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                />
+                            </div>
 
-                        <div>
-                            <label style={styles.label}>Nama Lengkap</label>
-                            <input
-                                type="text"
-                                name="guest_name"
-                                value={form.guest_name}
-                                onChange={handleChange}
-                                required
-                                style={styles.input}
-                            />
-                        </div>
+                            <div>
+                                <label style={styles.label}>Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={form.email}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                />
+                            </div>
 
-                        <div>
-                            <label style={styles.label}>Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                required
-                                style={styles.input}
-                            />
-                        </div>
+                            <div>
+                                <label style={styles.label}>
+                                    Tipe Kamar{" "}
+                                    {loadingRooms && (
+                                        <span style={{ color: "#3b82f6", fontStyle: "italic" }}>(memuat…)</span>
+                                    )}
+                                </label>
+                                <select
+                                    name="room_id"
+                                    value={form.room_id}
+                                    onChange={handleChange}
+                                    required
+                                    disabled={loadingRooms || !checkInOutSelected || rooms.length === 0}
+                                    style={{
+                                        ...styles.input,
+                                        ":focus": styles.inputFocus,
+                                    }}
+                                >
+                                    <option value="">Pilih tipe kamar yang tersedia</option>
+                                    {rooms.map((room) => (
+                                        <option
+                                            key={room.id}
+                                            value={room.id}
+                                            disabled={!room.is_available}
+                                        >
+                                            {room.room_type} • Rp {Number(room.price).toLocaleString("id-ID")}
+                                            {room.is_available
+                                                ? `  (${room.available_rooms || 0} tersisa)`
+                                                : "  • Penuh / Habis"}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                        <div>
-                            <label style={styles.label}>
-                                Tipe Kamar {loadingRooms && <span style={{ color: "#64748b" }}>(memuat...)</span>}
-                            </label>
-                            <select
-                                name="room_id"
-                                value={form.room_id}
-                                onChange={handleChange}
-                                required
-                                disabled={loadingRooms || !checkInOutSelected || rooms.length === 0}
-                                style={styles.input}
-                            >
-                                <option value="">Pilih tipe kamar yang tersedia</option>
-                                {rooms.map((room) => (
-                                    <option
-                                        key={room.id}
-                                        value={room.id}
-                                        disabled={!room.is_available}
-                                    >
-                                        {room.room_type} • Rp {Number(room.price).toLocaleString("id-ID")}
-                                        {room.is_available
-                                            ? `  (${room.available_rooms || 0} tersisa)`
-                                            : "  • Penuh"}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div style={{ gridColumn: "1 / -1", marginTop: "1.5rem" }}>
-                            <button
-                                type="submit"
-                                style={styles.bookBtn}
-                                disabled={loadingRooms || !form.room_id}
-                            >
-                                {loadingRooms ? "Memproses..." : "Konfirmasi & Pesan Sekarang"}
-                            </button>
-                        </div>
-                    </form>
+                            <div style={{ gridColumn: "1 / -1" }}>
+                                <button
+                                    type="submit"
+                                    style={{
+                                        ...styles.bookBtn,
+                                        ...(loadingRooms || !form.room_id ? { opacity: 0.65, cursor: "not-allowed" } : {}),
+                                    }}
+                                    disabled={loadingRooms || !form.room_id}
+                                    onMouseEnter={(e) =>
+                                        !loadingRooms &&
+                                        form.room_id &&
+                                        Object.assign(e.currentTarget.style, styles.bookBtnHover)
+                                    }
+                                    onMouseLeave={(e) =>
+                                        !loadingRooms &&
+                                        form.room_id &&
+                                        Object.assign(e.currentTarget.style, {
+                                            transform: "translateY(0)",
+                                            boxShadow: "0 12px 30px -6px rgba(16,185,129,0.4)",
+                                        })
+                                    }
+                                >
+                                    {loadingRooms ? "Memproses Pesanan..." : "Konfirmasi & Pesan Sekarang"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
+            {/* Modal Petunjuk */}
             {showGuideModal && (
                 <div style={styles.modalOverlay}>
                     <div style={styles.modalContent}>
-                        <h2 style={styles.modalTitle}>Cara Melakukan Booking Hotel</h2>
-                        <div style={styles.modalBody}>
-                            <p style={{ marginBottom: "1.2rem", fontWeight: 500 }}>
-                                <strong>Persiapan Awal (Admin)</strong><br />
-                                Sebelum melakukan booking, pastikan data <strong>Hotel</strong> dan <strong>Room / Tipe Kamar</strong> sudah ditambahkan melalui <strong>Admin Dashboard</strong>.<br />
-                                Klik tombol <strong>"Dashboard Admin"</strong> untuk masuk ke dashboard admin lalu tambahkan hotel dan kamar terlebih dahulu.<br />
-                                → Setelah data tersedia, barulah proses booking dapat dilakukan oleh user.
+                        <button style={styles.modalClose} onClick={closeGuideModal}>
+                            ×
+                        </button>
+
+                        <h2
+                            style={{
+                                fontSize: "2rem",
+                                fontWeight: 700,
+                                color: "#1e293b",
+                                textAlign: "center",
+                                margin: "0 0 2rem",
+                            }}
+                        >
+                            Panduan Lengkap Cara Booking Hotel
+                        </h2>
+
+                        <div style={{ fontSize: "1.1rem", lineHeight: 1.8, color: "#374151" }}>
+                            <p style={{ fontWeight: 600, marginBottom: "1.5rem", color: "#1e293b" }}>
+                                Pastikan admin sudah menambahkan data hotel dan tipe kamar melalui Dashboard Admin terlebih dahulu.
                             </p>
 
-                            <ol style={styles.modalList}>
-                                <li style={styles.modalStep}>
-                                    <strong>1. Cari Hotel di Kota Tujuan</strong><br />
-                                    Ketik nama kota (contoh: Bali, Jakarta, Yogyakarta, Surabaya) di kolom <strong>Lokasi Tujuan</strong> → klik tombol <strong>Cari Hotel</strong> atau tekan Enter.<br />
-                                    → Daftar hotel akan muncul di sebelah kanan secara otomatis.
+                            <ol style={{ paddingLeft: "2rem", margin: "2rem 0" }}>
+                                <li style={{ marginBottom: "1.4rem" }}>
+                                    <strong>1. Cari hotel</strong><br />
+                                    Ketik nama kota tujuan → klik "Cari Hotel" atau tekan Enter.
                                 </li>
-
-                                <li style={styles.modalStep}>
-                                    <strong>2. Pilih Hotel yang Diinginkan</strong><br />
-                                    Pada daftar hotel di sebelah kanan, klik tombol <strong>Pilih</strong> pada hotel yang Anda sukai.<br />
-                                    → Nama hotel akan otomatis terpilih di form pemesanan di bawah.
+                                <li style={{ marginBottom: "1.4rem" }}>
+                                    <strong>2. Pilih hotel</strong><br />
+                                    Klik tombol "Pilih Hotel" pada hotel yang Anda inginkan.
                                 </li>
-
-                                <li style={styles.modalStep}>
-                                    <strong>3. Tentukan Tanggal Menginap</strong><br />
-                                    Isi tanggal <strong>Check-in</strong> (tanggal mulai menginap) dan <strong>Check-out</strong> (tanggal keluar).<br />
-                                    → Sistem akan langsung memeriksa ketersediaan kamar untuk rentang tanggal tersebut.<br />
-                                    → Pastikan: Check-out lebih lambat dari Check-in dan Check-in tidak boleh di masa lalu.
+                                <li style={{ marginBottom: "1.4rem" }}>
+                                    <strong>3. Tentukan tanggal</strong><br />
+                                    Isi tanggal Check-in dan Check-out (pastikan valid).
                                 </li>
-
-                                <li style={styles.modalStep}>
-                                    <strong>4. Pilih Tipe Kamar yang Tersedia</strong><br />
-                                    Setelah tanggal diisi, dropdown <strong>Tipe Kamar</strong> akan menampilkan kamar yang masih tersedia.<br />
-                                    • Pilih tipe kamar yang ditandai dengan jumlah "tersisa" (misal: "2 tersisa").<br />
-                                    • Jika bertuliskan "Penuh" → kamar sudah habis untuk tanggal tersebut.<br />
-                                    → Pilih salah satu yang masih available.
+                                <li style={{ marginBottom: "1.4rem" }}>
+                                    <strong>4. Pilih tipe kamar</strong><br />
+                                    Pilih kamar yang masih tersedia (lihat jumlah "tersisa").
                                 </li>
-
-                                <li style={styles.modalStep}>
-                                    <strong>5. Isi Data Pribadi</strong><br />
-                                    Masukkan <strong>Nama Lengkap</strong> dan <strong>Email</strong> dengan benar.<br />
-                                    → Email ini akan digunakan untuk konfirmasi booking dan informasi lebih lanjut.
+                                <li style={{ marginBottom: "1.4rem" }}>
+                                    <strong>5. Isi data diri</strong><br />
+                                    Masukkan nama lengkap dan email dengan benar.
                                 </li>
-
-                                <li style={styles.modalStep}>
-                                    <strong>6. Konfirmasi Pemesanan</strong><br />
-                                    Periksa kembali semua data yang sudah diisi.<br />
-                                    Klik tombol <strong>Konfirmasi & Pesan Sekarang</strong>.<br />
-                                    → Jika berhasil, akan muncul pesan hijau "Booking berhasil!" beserta nomor referensi booking.
-                                </li>
-
-                                <li style={styles.modalStep}>
-                                    <strong>Catatan Penting</strong><br />
-                                    • Booking hanya bisa dilakukan jika ada kamar tersedia (sistem otomatis memeriksa).<br />
-                                    • Jika muncul pesan merah → baca dengan teliti (contoh: tanggal salah, kamar penuh, field kosong).<br />
-                                    • Admin dapat melihat semua booking di <strong>Admin Dashboard</strong> .<br />
-                                    • Proses ini tidak memerlukan login (untuk kemudahan testing/demo).<br />
-                                    • Refresh halaman jika ingin mulai dari awal.
+                                <li style={{ marginBottom: "1.4rem" }}>
+                                    <strong>6. Konfirmasi booking</strong><br />
+                                    Periksa semua data → klik "Konfirmasi & Pesan Sekarang".
                                 </li>
                             </ol>
 
-                            <div style={{ marginTop: "1.8rem", textAlign: "center" }}>
-                                <button style={styles.btnPrimary} onClick={closeGuideModal}>
-                                    Mengerti — Mulai Booking Sekarang →
+                            <p style={{ fontWeight: 600, color: "#1e40af", marginTop: "2.5rem" }}>
+                                Sistem akan otomatis memeriksa ketersediaan kamar berdasarkan tanggal yang dipilih.
+                            </p>
+
+                            <div style={{ textAlign: "center", marginTop: "3rem" }}>
+                                <button
+                                    style={{
+                                        ...styles.btnPrimary,
+                                        padding: "1.2rem 3rem",
+                                        fontSize: "1.2rem",
+                                    }}
+                                    onClick={closeGuideModal}
+                                >
+                                    Mengerti — Mulai Booking Sekarang
                                 </button>
                             </div>
                         </div>
