@@ -832,10 +832,10 @@ function BookingPage() {
                                             value={room.id}
                                             disabled={!room.is_available}
                                         >
-                                            {room.room_type} • Rp {Number(room.price).toLocaleString("id-ID")}
+                                            {room.room_type} -
                                             {room.is_available
-                                                ? `  (${room.available_rooms || 0} tersisa)`
-                                                : "  • Penuh / Habis"}
+                                                ? `  (Tersedia ${room.available_rooms || 0} Kamar)`
+                                                : "  (Penuh / Habis)"}
                                         </option>
                                     ))}
                                 </select>
