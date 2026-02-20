@@ -44,70 +44,7 @@ function Home() {
                     </Link>
                 </section>
 
-                {/* Search Section */}
-                {/* <section style={styles.searchSection}>
-                    <h2 style={styles.sectionTitle}>Cari Hotel di Kota Favoritmu</h2>
 
-                    <div style={styles.searchBox}>
-                        <input
-                            type="text"
-                            placeholder="Masukkan nama kota (contoh: Bali, Jakarta, Yogyakarta)"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && searchHotel()}
-                            style={styles.input}
-                        />
-                        <button
-                            onClick={searchHotel}
-                            disabled={loading}
-                            style={styles.searchButton}
-                        >
-                            {loading ? "Mencari..." : "Cari Hotel"}
-                        </button>
-                    </div>
-
-                    {error && <p style={styles.errorMessage}>{error}</p>}
-                </section> */}
-
-                {/* Hasil Pencarian */}
-                {hotels.length > 0 && (
-                    <section style={styles.resultsSection}>
-                        <h2 style={styles.sectionTitle}>
-                            Hotel di {city.charAt(0).toUpperCase() + city.slice(1)}
-                        </h2>
-
-                        <div style={styles.hotelGrid}>
-                            {hotels.map((hotel) => (
-                                <div key={hotel.id} style={styles.hotelCard}>
-                                    <h3 style={styles.hotelName}>{hotel.name}</h3>
-                                    <p style={styles.hotelCity}>📍 {hotel.city}</p>
-                                    {hotel.address && (
-                                        <p style={styles.hotelAddress}>{hotel.address}</p>
-                                    )}
-                                    {hotel.description && (
-                                        <p style={styles.hotelDesc}>
-                                            {hotel.description.substring(0, 120)}...
-                                        </p>
-                                    )}
-
-                                    {/* Link ke halaman booking dengan hotel tertentu (opsional) */}
-                                    <Link
-                                        to={`/booking?hotel=${hotel.id}`}
-                                        style={styles.selectHotelBtn}
-                                    >
-                                        Lihat Kamar & Pesan
-                                    </Link>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {hotels.length === 0 && !loading && city && (
-                    <p style={{ textAlign: "center", color: "#64748b", marginTop: "2rem" }}>
-                        Tidak ditemukan hotel di "{city}". Coba kota lain!
-                    </p>
-                )}
             </div>
         </div>
     );
