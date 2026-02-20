@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 20 Feb 2026 pada 20.01
+-- Waktu pembuatan: 21 Feb 2026 pada 00.23
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -34,10 +34,18 @@ CREATE TABLE `bookings` (
   `guest_name` varchar(255) DEFAULT NULL,
   `check_in` date DEFAULT NULL,
   `check_out` date DEFAULT NULL,
+  `total_price` decimal(12,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `email` varchar(255) NOT NULL,
   `booking_reference` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `bookings`
+--
+
+INSERT INTO `bookings` (`id`, `hotel_id`, `room_id`, `guest_name`, `check_in`, `check_out`, `total_price`, `created_at`, `email`, `booking_reference`) VALUES
+(7, 1, 1, 'yusdj', '2026-03-03', '2026-03-04', 200000.00, '2026-02-20 23:17:20', 'admin@gmail.com', 'cc69d533-3adf-4af7-a8be-e0a47b73ca01');
 
 -- --------------------------------------------------------
 
@@ -60,7 +68,8 @@ CREATE TABLE `hotels` (
 
 INSERT INTO `hotels` (`id`, `name`, `city`, `address`, `description`, `created_at`) VALUES
 (1, 'Escape Haven - Bali Retreat', 'Badung', 'Canggu', 'Internet Kecepatan Tinggi Gratis (Wi-Fi)\nKelas kebugaran \nKolam renang \nSarapan gratis \nPenyewaan sepeda \nTersedia sepeda \nTransportasi bandara \ngratis Spa', '2026-02-20 16:27:07'),
-(2, 'Bliss Sanctuary for Women', 'Badung', 'Canggu', 'Mantapp', '2026-02-20 17:23:23');
+(2, 'Bliss Sanctuary for Women', 'Badung', 'Canggu', 'Mantapp', '2026-02-20 17:23:23'),
+(4, 'Swiss Bell Hotel', 'Jakarta', 'Jakarta Timur', 'Hotel Murah Meriah', '2026-02-20 22:55:01');
 
 -- --------------------------------------------------------
 
@@ -83,7 +92,11 @@ CREATE TABLE `rooms` (
 
 INSERT INTO `rooms` (`id`, `hotel_id`, `room_type`, `price`, `total_rooms`, `capacity`) VALUES
 (1, 1, 'Single', 200000.00, 2, 2),
-(2, 2, 'Single', 500000.00, 5, 2);
+(2, 2, 'Single', 500000.00, 5, 2),
+(3, 4, 'Premium', 567000.00, 3, 2),
+(4, 4, 'Single', 235000.00, 2, 2),
+(5, 1, 'VIP', 865000.00, 2, 2),
+(6, 2, 'Deluxe', 1123000.00, 1, 2);
 
 --
 -- Indexes for dumped tables
@@ -118,19 +131,19 @@ ALTER TABLE `rooms`
 -- AUTO_INCREMENT untuk tabel `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT untuk tabel `hotels`
 --
 ALTER TABLE `hotels`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT untuk tabel `rooms`
 --
 ALTER TABLE `rooms`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)

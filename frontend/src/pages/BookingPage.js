@@ -23,8 +23,47 @@ function BookingPage() {
         check_out: "",
     });
 
+    // State tambahan untuk perhitungan biaya
+    const [nights, setNights] = useState(0);
+    const [totalPrice, setTotalPrice] = useState(0);
+    const [pricePerNight, setPricePerNight] = useState(0);
+
     // Ref untuk auto-scroll ke alert setelah booking berhasil
     const alertRef = useRef(null);
+
+    // Hitung jumlah malam dan total harga setiap kali tanggal atau kamar berubah
+    useEffect(() => {
+        if (!form.check_in || !form.check_out || !form.room_id) {
+            setNights(0);
+            setTotalPrice(0);
+            setPricePerNight(0);
+            return;
+        }
+
+        const cin = new Date(form.check_in);
+        const cout = new Date(form.check_out);
+
+        if (isNaN(cin.getTime()) || isNaN(cout.getTime()) || cin >= cout) {
+            setNights(0);
+            setTotalPrice(0);
+            setPricePerNight(0);
+            return;
+        }
+
+        const diffTime = cout - cin;
+        const calculatedNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setNights(calculatedNights);
+
+        const selectedRoom = rooms.find((r) => String(r.id) === String(form.room_id));
+        if (selectedRoom && selectedRoom.price) {
+            const price = Number(selectedRoom.price);
+            setPricePerNight(price);
+            setTotalPrice(price * calculatedNights);
+        } else {
+            setPricePerNight(0);
+            setTotalPrice(0);
+        }
+    }, [form.check_in, form.check_out, form.room_id, rooms]);
 
     useEffect(() => {
         if (!form.hotel_id || !form.check_in || !form.check_out) {
@@ -149,8 +188,36 @@ function BookingPage() {
             return;
         }
 
+        if (nights < 1 || totalPrice <= 0) {
+            setMessage("Periksa kembali tanggal menginap (minimal 1 malam)");
+            setMessageType("error");
+            return;
+        }
+
         try {
-            const res = await axios.post("http://localhost:5000/api/bookings", form);
+            const payload = {
+                ...form,
+                // Kirim total_price agar backend bisa memverifikasi (opsional tapi direkomendasikan)
+                total_price: totalPrice,
+                // Bisa juga kirim nights jika ingin verifikasi ganda
+                nights: nights,
+            };
+
+            const res = await axios.post("http://localhost:5000/api/bookings", payload, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            // Cek apakah backend benar-benar mengembalikan total_price yang sesuai
+            const returnedTotal = res.data.total_price;
+            if (returnedTotal && Math.abs(returnedTotal - totalPrice) > 1) {
+                console.warn("Total price dari backend berbeda dengan perhitungan frontend", {
+                    frontend: totalPrice,
+                    backend: returnedTotal,
+                });
+            }
+
             setMessage("Booking berhasil! Terima kasih atas pemesanannya.");
             setMessageType("success");
             setBookingRef(res.data.booking_reference);
@@ -166,8 +233,11 @@ function BookingPage() {
             });
             setRooms([]);
             setCheckInOutSelected(false);
+            setNights(0);
+            setTotalPrice(0);
+            setPricePerNight(0);
 
-            // Auto scroll ke alert success dengan sedikit delay agar render selesai
+            // Auto scroll ke alert success dengan sedikit delay
             setTimeout(() => {
                 if (alertRef.current) {
                     alertRef.current.scrollIntoView({
@@ -176,10 +246,10 @@ function BookingPage() {
                     });
                 }
             }, 150);
-
         } catch (err) {
             console.error("Error booking:", err.response?.data || err.message);
-            setMessage(err.response?.data?.message || "Gagal melakukan booking. Silakan coba lagi.");
+            const errorMsg = err.response?.data?.message || "Gagal melakukan booking. Silakan coba lagi.";
+            setMessage(errorMsg);
             setMessageType("error");
         }
     };
@@ -187,7 +257,7 @@ function BookingPage() {
     const openGuideModal = () => setShowGuideModal(true);
     const closeGuideModal = () => setShowGuideModal(false);
 
-    // Styles (modern, responsive, dengan hover effects)
+    // Styles (modern, responsive, dengan hover effects) — tetap sama
     const styles = {
         page: {
             background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
@@ -256,7 +326,6 @@ function BookingPage() {
             cursor: "pointer",
         },
         alert: {
-            ref: alertRef,
             padding: "1.5rem 2rem",
             borderRadius: "1rem",
             margin: "0 auto 3rem",
@@ -740,7 +809,9 @@ function BookingPage() {
                                 <label style={styles.label}>
                                     Tipe Kamar{" "}
                                     {loadingRooms && (
-                                        <span style={{ color: "#3b82f6", fontStyle: "italic" }}>(memuat…)</span>
+                                        <span style={{ color: "#3b82f6", fontStyle: "italic" }}>
+                                            (memuat…)
+                                        </span>
                                     )}
                                 </label>
                                 <select
@@ -770,22 +841,97 @@ function BookingPage() {
                                 </select>
                             </div>
 
+                            {/* RINGKASAN BIAYA */}
+                            <div
+                                style={{
+                                    gridColumn: "1 / -1",
+                                    background: totalPrice > 0 ? "#f0fdfa" : "#f8fafc",
+                                    borderRadius: "1rem",
+                                    padding: "1.5rem",
+                                    margin: "1rem 0 2rem 0",
+                                    border: totalPrice > 0 ? "2px solid #6ee7b7" : "1px dashed #cbd5e1",
+                                    boxShadow: totalPrice > 0 ? "0 4px 14px rgba(16,185,129,0.12)" : "none",
+                                }}
+                            >
+                                {nights > 0 && totalPrice > 0 ? (
+                                    <>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                marginBottom: "1rem",
+                                                fontSize: "1.1rem",
+                                                color: "#334155",
+                                            }}
+                                        >
+                                            <span>Harga per malam</span>
+                                            <strong>Rp {pricePerNight.toLocaleString("id-ID")}</strong>
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                marginBottom: "1rem",
+                                                fontSize: "1.1rem",
+                                                color: "#334155",
+                                            }}
+                                        >
+                                            <span>Jumlah malam menginap</span>
+                                            <strong>{nights} malam</strong>
+                                        </div>
+
+                                        <hr style={{ borderColor: "#e2e8f0", margin: "1rem 0" }} />
+
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                fontSize: "1.5rem",
+                                                fontWeight: 700,
+                                                color: "#065f46",
+                                            }}
+                                        >
+                                            <span>Total Pembayaran</span>
+                                            <span>Rp {totalPrice.toLocaleString("id-ID")}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div
+                                        style={{
+                                            textAlign: "center",
+                                            color: "#64748b",
+                                            fontSize: "1.1rem",
+                                            padding: "1rem 0",
+                                        }}
+                                    >
+                                        Pilih tanggal check-in, check-out, dan tipe kamar untuk melihat rincian biaya
+                                    </div>
+                                )}
+                            </div>
+
                             <div style={{ gridColumn: "1 / -1" }}>
                                 <button
                                     type="submit"
                                     style={{
                                         ...styles.bookBtn,
-                                        ...(loadingRooms || !form.room_id ? { opacity: 0.65, cursor: "not-allowed" } : {}),
+                                        ...(loadingRooms || !form.room_id || nights < 1 || totalPrice <= 0
+                                            ? { opacity: 0.65, cursor: "not-allowed" }
+                                            : {}),
                                     }}
-                                    disabled={loadingRooms || !form.room_id}
+                                    disabled={loadingRooms || !form.room_id || nights < 1 || totalPrice <= 0}
                                     onMouseEnter={(e) =>
                                         !loadingRooms &&
                                         form.room_id &&
+                                        nights >= 1 &&
+                                        totalPrice > 0 &&
                                         Object.assign(e.currentTarget.style, styles.bookBtnHover)
                                     }
                                     onMouseLeave={(e) =>
                                         !loadingRooms &&
                                         form.room_id &&
+                                        nights >= 1 &&
+                                        totalPrice > 0 &&
                                         Object.assign(e.currentTarget.style, {
                                             transform: "translateY(0)",
                                             boxShadow: "0 12px 30px -6px rgba(16,185,129,0.4)",

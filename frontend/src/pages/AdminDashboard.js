@@ -228,34 +228,67 @@ function AdminDashboard() {
                                     <div>Email</div>
                                     <div>Check-in</div>
                                     <div>Check-out</div>
+
+                                    <div>Total Harga</div>          {/* Kolom sebelumnya */}
                                     <div>Aksi</div>
                                 </div>
 
-                                {bookings.map((b, i) => (
-                                    <div
-                                        key={b.id}
-                                        style={{
-                                            ...styles.tableRow,
-                                            background: i % 2 === 0 ? "#f8fafc" : "white",
-                                        }}
-                                    >
-                                        <div style={styles.refCell}>{b.booking_reference}</div>
-                                        <div>{b.hotel_name || "—"}</div>
-                                        <div>{b.room_type || "—"}</div>
-                                        <div>{b.guest_name}</div>
-                                        <div style={styles.emailCell}>{b.email}</div>
-                                        <div>{formatDate(b.check_in)}</div>
-                                        <div>{formatDate(b.check_out)}</div>
-                                        <div>
-                                            <button
-                                                style={styles.btnDangerSmall}
-                                                onClick={() => deleteBooking(b.id)}
-                                            >
-                                                Batal
-                                            </button>
+                                {bookings.map((b, i) => {
+                                    // Hitung jumlah malam jika backend belum kirim field nights
+                                    let nights = 0;
+                                    if (b.check_in && b.check_out) {
+                                        const cin = new Date(b.check_in);
+                                        const cout = new Date(b.check_out);
+                                        if (!isNaN(cin) && !isNaN(cout) && cout > cin) {
+                                            const diffTime = cout - cin;
+                                            nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        }
+                                    }
+
+                                    // Jika backend sudah kirim nights, gunakan ini saja (lebih akurat)
+                                    // nights = b.nights || nights;
+
+                                    return (
+                                        <div
+                                            key={b.id}
+                                            style={{
+                                                ...styles.tableRow,
+                                                background: i % 2 === 0 ? "#f8fafc" : "white",
+                                            }}
+                                        >
+                                            <div style={styles.refCell}>{b.booking_reference}</div>
+                                            <div>{b.hotel_name || "—"}</div>
+                                            <div>{b.room_type || "—"}</div>
+                                            <div>{b.guest_name}</div>
+                                            <div style={styles.emailCell}>{b.email}</div>
+                                            <div>{formatDate(b.check_in)}</div>
+                                            <div>{formatDate(b.check_out)}</div>
+
+                                            {/* Kolom Durasi Menginap */}
+
+
+                                            {/* Kolom Total Harga */}
+                                            <div style={{
+                                                fontWeight: 600,
+                                                color: "#065f46",
+                                                textAlign: "right",
+                                            }}>
+                                                {b.total_price
+                                                    ? `Rp ${Number(b.total_price).toLocaleString("id-ID")}`
+                                                    : "—"} / {nights > 0 ? `${nights} malam` : "—"}
+                                            </div>
+
+                                            <div>
+                                                <button
+                                                    style={styles.btnDangerSmall}
+                                                    onClick={() => deleteBooking(b.id)}
+                                                >
+                                                    Batal
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </section>
