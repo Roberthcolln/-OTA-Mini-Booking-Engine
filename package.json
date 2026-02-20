@@ -1,5 +1,16 @@
 {
+  "name": "ota-mini-booking-engine",
+  "version": "1.0.0",
+  "private": true,
   "dependencies": {
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm start",
+    "start": "concurrently \"npm run server\" \"npm run client\""
   }
 }
