@@ -411,7 +411,7 @@ function AdminDashboard() {
                         <h2 style={styles.modalTitle}>Petunjuk Penggunaan Admin Dashboard</h2>
                         <div style={styles.modalBody}>
                             <p style={{ marginBottom: "1.2rem", fontWeight: 500 }}>
-                                Selamat datang di Admin Dashboard! Halaman ini dibuat untuk keperluan testing project booking hotel.
+                                Halaman ini dibuat untuk keperluan testing project booking hotel.
                                 Berikut panduan lengkap cara menggunakannya:
                             </p>
 
